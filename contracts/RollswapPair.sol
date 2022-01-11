@@ -1,0 +1,74 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "./libraries/Math.sol";
+import "./RollswapERC20.sol";
+
+contract RollswapPair is ReentrancyGuard {
+    using SafeMath for uint256;
+    using Math for uint256;
+    using SafeERC20 for IERC20Metadata;
+
+    IERC20Metadata public token0;
+    IERC20Metadata public token1;
+    RollswapERC20 public lpToken;
+
+    constructor(IERC20Metadata _token0, IERC20Metadata _token1) ReentrancyGuard() {
+        token0 = IERC20Metadata(_token0);
+        token1 = IERC20Metadata(_token1);
+        lpToken = _createLPToken();
+    }
+
+    function _createLPToken() private returns (RollswapERC20) {
+        string memory name = string(abi.encodePacked("Rollswap", token0.name(),"/", token1.name(), " LP Token"));
+        string memory symbol = string(abi.encodePacked("Roll", token0.symbol(), "/", token1.symbol()));
+
+        return new RollswapERC20(name, symbol, address(token0), address(token1));
+    }
+
+    function getReserve() public view returns (uint256, uint256) {
+        return (IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)));
+    }
+ 
+    function addLiquidity(uint256 _token0amount, uint256 _token1amount) external {
+        _transferTokensToPool(msg.sender, _token0amount, _token1amount );
+        uint256 lpTokenAmount = _calculateLPTokenToMint(_token0amount,_token1amount);
+        lpToken.mint(msg.sender, lpTokenAmount);
+    }
+
+    function _transferTokensToPool(address _provider, uint256 _token0amount, uint256 _token1amount) private {
+        require(_token0amount>0 && _token1amount>0, "Token amount must be greater than 0");
+        require(token0.allowance(_provider, address(this)) >= _token0amount && token1.allowance(_provider, address(this)) >= _token1amount);
+
+        token0.safeTransferFrom(_provider,address(this), _token0amount);
+        token1.safeTransferFrom(_provider, address(this), _token1amount);
+    }
+
+    function _calculateLPTokenToMint(uint256 _token0amount, uint256 _token1amount) private view returns (uint256) {
+        uint256 lpTokenSupply = lpToken.totalSupply();
+        if (lpTokenSupply == 0) {
+            return (_token0amount * _token1amount).sqrt();
+        } else {
+            uint256 reserve0 = token0.balanceOf(address(this));
+            uint256 reserve1 = token1.balanceOf(address(this));
+
+            uint256 totalValueInPoolAsToken0 = reserve0.mul(2);
+            uint256 token1AmountAddedAsToken0 = _token1amount.mul(reserve0).div(reserve1);
+            uint256 totalValueAddedAsToken0 = _token0amount.add(token1AmountAddedAsToken0);
+
+            uint256 totalFutureSupply = lpTokenSupply.mul(totalValueInPoolAsToken0).div((
+                totalValueInPoolAsToken0.sub(totalValueAddedAsToken0)
+            ));
+            
+            uint256 total = totalFutureSupply - lpTokenSupply;
+            return total;
+        }
+    }
+
+
+}
