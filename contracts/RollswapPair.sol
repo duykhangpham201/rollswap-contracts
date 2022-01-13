@@ -133,6 +133,4 @@ contract RollswapPair is ReentrancyGuard {
     function getLPtokenAmount() external view returns (uint256) {
         return lpToken.balanceOf(msg.sender);
     }
-
-
 }
