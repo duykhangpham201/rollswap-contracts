@@ -110,29 +110,24 @@ contract RollswapPair is ReentrancyGuard {
         token1.safeTransfer(_provider, _token1amount);
     }
 
-    //review
-
-    function swapTokens(uint256 _amount0out, uint256 _amount1out) external nonReentrant {
-        require(_amount0out>0 || _amount1out>0);
+    function swapToken0forToken1(uint256 _amountIn) external nonReentrant {
+        require(_amountIn>0);
         (uint256 reserve0, uint256 reserve1) = getReserve();
-        require(_amount0out < reserve0 && _amount1out < reserve1);
+        token0.safeTransfer(msg.sender, _amountIn);
 
-        if (_amount0out > 0) {
-            token0.safeTransfer(msg.sender, _amount0out);
-        }
+        uint256 amountSwap = _getAmount(_amountIn, reserve0, reserve1);
+        require(amountSwap < reserve1);
+        token1.safeTransferFrom(address(this), msg.sender, amountSwap);
+    }
 
-        if (_amount1out > 0) {
-            token1.safeTransfer(msg.sender, _amount1out);
-        }
+    function _getAmount(uint256 inputAmount, uint256 inputReserve, uint256 outputReserve) private pure returns (uint256) {
+        require(inputReserve > 0 && outputReserve >0);
 
-        (uint256 balance0, uint256 balance1) = getReserve();
-        uint256 amount0in = balance0 > reserve0 - _amount0out ? balance0 - (reserve0 - _amount0out) : 0;
-        uint256 amount1in = balance1 > reserve1 - _amount1out ? balance1 - (reserve1 - _amount1out) : 0;
-        
-        require(amount0in > 0 || amount1in > 0 );
-        uint256 balance0adjusted = balance0.mul(1000).sub(amount0in.mul(3));
-        uint256 balance1adjusted = balance1.mul(1000).sub(amount1in.mul(3));
-        
+        uint256 inputAmountWithFee = inputAmount * 99;
+        uint256 numerator = inputAmountWithFee * outputReserve;
+        uint256 denominator = (inputReserve*100) + inputAmountWithFee;
+
+        return numerator / denominator;
     }
 
 
