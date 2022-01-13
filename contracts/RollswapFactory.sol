@@ -12,7 +12,7 @@ contract RollswapFactory {
 
     event PairCreated(address token0, address token1, address pair, uint);
 
-    function createPair(address token0, address token1) external {
+    function createPair(address token0, address token1) external returns (RollswapPair) {
         require(token0 != token1 && token0 != address(0) && token1 != address(0));
         require(getPair[token0][token1] == address(0));
 
@@ -20,8 +20,11 @@ contract RollswapFactory {
         getPair[token0][token1] = address(pair);
         getPair[token1][token0] = address(pair);
         allPairs.push(address(pair));
+        
 
         emit PairCreated(token0, token1, address(pair), allPairs.length);
+
+        return pair;
     }
 
     function allPairsLength() external view returns (uint) {
