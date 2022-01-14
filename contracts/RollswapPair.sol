@@ -57,7 +57,7 @@ contract RollswapPair is ReentrancyGuard {
 
     function _transferTokensToPool(address _provider, uint256 _token0amount, uint256 _token1amount) private {
         require(_token0amount>0 && _token1amount>0, "Token amount must be greater than 0");
-        require(token0.allowance(_provider, address(this)) >= _token0amount && token1.allowance(_provider, address(this)) >= _token1amount);
+        require(token0.allowance(_provider, address(this)) >= _token0amount && token1.allowance(_provider, address(this)) >= _token1amount, "allowance must be greater than amount");
 
         token0.safeTransferFrom(_provider,address(this), _token0amount);
         token1.safeTransferFrom(_provider, address(this), _token1amount);
@@ -111,17 +111,17 @@ contract RollswapPair is ReentrancyGuard {
     }
 
     function swapToken0forToken1(uint256 _amountIn) external nonReentrant {
-        require(_amountIn>0);
+        require(_amountIn>0, 'amountSwap must be greater than 0');
         (uint256 reserve0, uint256 reserve1) = getReserve();
         token0.safeTransfer(msg.sender, _amountIn);
 
         uint256 amountSwap = _getAmount(_amountIn, reserve0, reserve1);
-        require(amountSwap < reserve1);
+        require(amountSwap < reserve1, "amountSwap must be smaller than reserve");
         token1.safeTransferFrom(address(this), msg.sender, amountSwap);
     }
 
     function _getAmount(uint256 inputAmount, uint256 inputReserve, uint256 outputReserve) private pure returns (uint256) {
-        require(inputReserve > 0 && outputReserve >0);
+        require(inputReserve > 0 && outputReserve >0, "reserve must be larger than 0");
 
         uint256 inputAmountWithFee = inputAmount * 99;
         uint256 numerator = inputAmountWithFee * outputReserve;
@@ -133,4 +133,5 @@ contract RollswapPair is ReentrancyGuard {
     function getLPtokenAmount() external view returns (uint256) {
         return lpToken.balanceOf(msg.sender);
     }
+    
 }

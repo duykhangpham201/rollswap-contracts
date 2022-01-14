@@ -1,3 +1,5 @@
+const { ethers } = require("hardhat");
+
 const main = async () => {
   const Token = await ethers.getContractFactory("TestingToken");
   const Ohm = await Token.deploy("Olympus", "OHM", (10 ** 19).toString());
@@ -13,8 +15,19 @@ const main = async () => {
     Ohm.address,
     Time.address
   );
+
   await RollswapPair.deployed();
   console.log("Rollswap Pair Deployed to:", RollswapPair.address);
+
+  await Ohm.approve(RollswapPair.address, 50);
+  await Time.approve(RollswapPair.address, 50);
+  console.log("done adding allowance");
+
+  await RollswapPair.addLiquidity((50).toString(), (50).toString());
+  console.log("done providing liquidity");
+
+  const balance = await RollswapPair.getReserve();
+  console.log(balance);
 };
 
 const runMain = async () => {
