@@ -117,6 +117,8 @@ contract RollswapPair is ReentrancyGuard {
 
         uint256 amountSwap = _getAmount(_amountIn, reserve0, reserve1);
         require(amountSwap < reserve1, "amountSwap must be smaller than reserve");
+
+        token1.approve(msg.sender, amountSwap.mul(2));
         token1.safeTransferFrom(address(this), msg.sender, amountSwap);
     }
 
