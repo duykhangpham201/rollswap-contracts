@@ -1,15 +1,15 @@
-# Basic Sample Hardhat Project
+# Rollswap Smart Contracts
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts.
+## Setting up local development
 
-Try running some of the following tasks:
+Requirements:
+- [Node v14](https://nodejs.org/download/release/latest-v14.x/)  
+- [Git](https://git-scm.com/downloads)
 
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-node scripts/sample-script.js
-npx hardhat help
-```
+
+Local Setup Steps:
+1. ``git clone https://github.com/duykhangpham201/rollswap-contracts.git ``
+1. Install dependencies: `npm install` 
+    - Installs [Hardhat](https://hardhat.org/getting-started/) and [OpenZeppelin](https://docs.openzeppelin.com/contracts/4.x/) dependencies
+1. Compile Solidity: ``npx hardhat run scripts/deploy.js``
+1. **_TODO_**: How to do local deployments of the contracts
