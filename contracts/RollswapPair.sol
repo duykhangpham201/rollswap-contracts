@@ -113,21 +113,20 @@ contract RollswapPair is ReentrancyGuard {
     function swapToken0forToken1(uint256 _amountIn) external nonReentrant {
         require(_amountIn>0, 'amountSwap must be greater than 0');
         (uint256 reserve0, uint256 reserve1) = getReserve();
-        token0.safeTransfer(msg.sender, _amountIn);
+        token0.safeTransferFrom(msg.sender, address(this), _amountIn);
 
         uint256 amountSwap = _getAmount(_amountIn, reserve0, reserve1);
         require(amountSwap < reserve1, "amountSwap must be smaller than reserve");
 
-        token1.approve(msg.sender, amountSwap.mul(2));
-        token1.safeTransferFrom(address(this), msg.sender, amountSwap);
+        token1.safeTransfer(msg.sender, amountSwap);
     }
 
     function _getAmount(uint256 inputAmount, uint256 inputReserve, uint256 outputReserve) private pure returns (uint256) {
         require(inputReserve > 0 && outputReserve >0, "reserve must be larger than 0");
 
-        uint256 inputAmountWithFee = inputAmount * 99;
+        uint256 inputAmountWithFee = inputAmount ;
         uint256 numerator = inputAmountWithFee * outputReserve;
-        uint256 denominator = (inputReserve*100) + inputAmountWithFee;
+        uint256 denominator = inputReserve + inputAmountWithFee;
 
         return numerator / denominator;
     }
